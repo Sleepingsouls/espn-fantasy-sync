@@ -14,7 +14,7 @@ SEASON = int(os.getenv("ESPN_SEASON", "2026"))
 ESPN_S2 = os.environ["ESPN_S2"]
 ESPN_SWID = os.environ["ESPN_SWID"]
 
-OUTPUT_PATH = Path(os.getenv("OUTPUT_PATH", "public/fantasy-state.json"))
+OUTPUT_PATH = Path("docs/fantasy-state.json")
 FREE_AGENT_LIMIT = int(os.getenv("FREE_AGENT_LIMIT", "250"))
 
 # Fields we explicitly permit from ESPN objects. We never dump raw objects/responses.
