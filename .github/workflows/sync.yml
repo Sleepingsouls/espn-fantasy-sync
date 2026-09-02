@@ -48,7 +48,7 @@ jobs:
           import os
           from pathlib import Path
 
-          text = Path("public/fantasy-state.json").read_text(encoding="utf-8")
+          text = Path("docs/fantasy-state.json").read_text(encoding="utf-8")
 
           for name in ("ESPN_S2", "ESPN_SWID"):
               secret = os.environ.get(name, "")
@@ -62,7 +62,7 @@ jobs:
 
       - name: Commit refreshed public data
         run: |
-          if git diff --quiet -- public/fantasy-state.json; then
+          if git diff --quiet -- docs/fantasy-state.json; then
             echo "No fantasy data changes to commit."
             exit 0
           fi
