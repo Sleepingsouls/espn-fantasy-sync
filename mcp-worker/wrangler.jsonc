@@ -1,0 +1,6 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "espn-fantasy-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-02"
+}
