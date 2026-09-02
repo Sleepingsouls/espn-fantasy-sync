@@ -70,6 +70,6 @@ jobs:
           git config user.name "espn-fantasy-sync[bot]"
           git config user.email "espn-fantasy-sync[bot]@users.noreply.github.com"
 
-          git add public/fantasy-state.json
+          git add docs/fantasy-state.json
           git commit -m "Refresh fantasy league state"
           git push
