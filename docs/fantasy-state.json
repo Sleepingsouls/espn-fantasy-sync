@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-09-02T18:57:53.245055+00:00",
+  "generated_at_utc": "2026-09-02T19:16:09.280388+00:00",
   "league": {
     "league_id": 1749747321,
     "season": 2026,
@@ -12139,9 +12139,5 @@
       "away_score": 0.0
     }
   ],
-  "changes_since_previous_refresh": [
-    {
-      "type": "initial_snapshot"
-    }
-  ]
+  "changes_since_previous_refresh": []
 }
