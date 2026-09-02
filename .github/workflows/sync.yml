@@ -1,1 +1,75 @@
+name: Refresh ESPN fantasy data
 
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs every 4 hours. GitHub Actions cron uses UTC.
+    - cron: "17 */4 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: espn-fantasy-sync
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch and sanitize league state
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+          ESPN_LEAGUE_ID: "1749747321"
+          ESPN_SEASON: "2026"
+          FREE_AGENT_LIMIT: "250"
+        run: python src/sync.py
+
+      - name: Secondary credential leak check
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+        shell: python
+        run: |
+          import os
+          from pathlib import Path
+
+          text = Path("public/fantasy-state.json").read_text(encoding="utf-8")
+
+          for name in ("ESPN_S2", "ESPN_SWID"):
+              secret = os.environ.get(name, "")
+              if secret and secret in text:
+                  raise SystemExit(
+                      f"Refusing to publish: {name} appeared in sanitized JSON"
+                  )
+
+          print("Credential leak check passed.")
+
+      - name: Commit refreshed public data
+        run: |
+          if git diff --quiet -- public/fantasy-state.json; then
+            echo "No fantasy data changes to commit."
+            exit 0
+          fi
+
+          git config user.name "espn-fantasy-sync[bot]"
+          git config user.email "espn-fantasy-sync[bot]@users.noreply.github.com"
+
+          git add public/fantasy-state.json
+          git commit -m "Refresh fantasy league state"
+          git push
