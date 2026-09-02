@@ -39,6 +39,14 @@ jobs:
           FREE_AGENT_LIMIT: "250"
         run: python src/sync.py
 
+      - name: Add executed transaction history
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+          ESPN_LEAGUE_ID: "1749747321"
+          ESPN_SEASON: "2026"
+        run: python src/enrich_transactions.py
+
       - name: Secondary credential leak check
         env:
           ESPN_S2: ${{ secrets.ESPN_S2 }}
