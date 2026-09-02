@@ -1,415 +1,75 @@
-import json
-import os
-import re
-from datetime import datetime, timezone
-from pathlib import Path
-
-from espn_api.football import League
-
-
-OUTPUT_PATH = Path("public/fantasy-state.json")
-
-LEAGUE_ID = int(os.environ.get("ESPN_LEAGUE_ID", "1749747321"))
-SEASON = int(os.environ.get("ESPN_SEASON", "2026"))
-FREE_AGENT_LIMIT = int(os.environ.get("FREE_AGENT_LIMIT", "250"))
-
-ESPN_S2 = os.environ.get("ESPN_S2", "")
-ESPN_SWID = os.environ.get("ESPN_SWID", "")
-
-SENSITIVE_KEY_PATTERN = re.compile(
-    r"(cookie|authorization|token|secret|password|espn_s2|swid|session)",
-    re.IGNORECASE,
-)
-
-
-def safe_attr(obj, name, default=None):
-    try:
-        return getattr(obj, name, default)
-    except Exception:
-        return default
-
-
-def player_to_dict(player):
-    if player is None:
-        return None
-
-    stats = safe_attr(player, "stats", {}) or {}
-    current_week_stats = {}
-
-    for key, value in stats.items():
-        try:
-            if isinstance(key, tuple) and key[0] == league.current_week:
-                current_week_stats[str(key)] = value
-        except Exception:
-            continue
-
-    return {
-        "player_id": safe_attr(player, "playerId"),
-        "name": safe_attr(player, "name"),
-        "position": safe_attr(player, "position"),
-        "pro_team": safe_attr(player, "proTeam"),
-        "eligible_slots": safe_attr(player, "eligibleSlots", []),
-        "lineup_slot": safe_attr(player, "lineupSlot"),
-        "injury_status": safe_attr(player, "injuryStatus"),
-        "injured": safe_attr(player, "injured"),
-        "position_rank": safe_attr(player, "posRank"),
-        "percent_owned": safe_attr(player, "percent_owned"),
-        "percent_started": safe_attr(player, "percent_started"),
-        "total_points": safe_attr(player, "total_points"),
-        "projected_total_points": safe_attr(
-            player, "projected_total_points"
-        ),
-        "acquisition_type": safe_attr(player, "acquisitionType"),
-        "on_team_id": safe_attr(player, "onTeamId"),
-        "current_week_stats": current_week_stats,
-    }
-
-
-def team_to_dict(team):
-    return {
-        "team_id": safe_attr(team, "team_id"),
-        "team_name": safe_attr(team, "team_name"),
-        "team_abbrev": safe_attr(team, "team_abbrev"),
-        "wins": safe_attr(team, "wins"),
-        "losses": safe_attr(team, "losses"),
-        "ties": safe_attr(team, "ties"),
-        "points_for": safe_attr(team, "points_for"),
-        "points_against": safe_attr(team, "points_against"),
-        "standing": safe_attr(team, "standing"),
-        "roster": [
-            player_to_dict(player)
-            for player in (safe_attr(team, "roster", []) or [])
-        ],
-    }
-
-
-def transaction_item_to_dict(item):
-    player = safe_attr(item, "player")
-
-    if isinstance(player, str):
-        player_name = player
-        player_id = safe_attr(item, "playerId")
-    else:
-        player_name = safe_attr(player, "name")
-        player_id = safe_attr(item, "playerId")
-
-    return {
-        "type": safe_attr(item, "type"),
-        "player_id": player_id,
-        "player_name": player_name,
-    }
-
-
-def transaction_to_dict(transaction):
-    team = safe_attr(transaction, "team")
-
-    return {
-        "type": safe_attr(transaction, "type"),
-        "status": safe_attr(transaction, "status"),
-        "scoring_period": safe_attr(transaction, "scoring_period"),
-        "date": safe_attr(transaction, "date"),
-        "bid_amount": safe_attr(transaction, "bid_amount"),
-        "team_id": safe_attr(team, "team_id"),
-        "team_name": safe_attr(team, "team_name"),
-        "items": [
-            transaction_item_to_dict(item)
-            for item in (safe_attr(transaction, "items", []) or [])
-        ],
-    }
-
-
-def get_transactions():
-    """
-    Fetch completed league transaction activity.
-
-    ESPN's transaction endpoint is scoring-period based, so query
-    every scoring period from Week 1 through the current ESPN period.
-    Failures for one period do not break the entire sync.
-    """
-    transactions = []
-    errors = []
-
-    max_period = max(
-        int(safe_attr(league, "scoringPeriodId", 1) or 1),
-        int(safe_attr(league, "current_week", 1) or 1),
-    )
-
-    transaction_types = {
-        "FREEAGENT",
-        "WAIVER",
-        "WAIVER_ERROR",
-        "TRADE",
-    }
-
-    for scoring_period in range(1, max_period + 1):
-        try:
-            period_transactions = league.transactions(
-                scoring_period=scoring_period,
-                types=transaction_types,
-            )
-
-            for transaction in period_transactions:
-                data = transaction_to_dict(transaction)
-
-                # Keep actual activity, but don't publish failed waiver
-                # attempts as meaningful league moves.
-                if data["status"] == "EXECUTED":
-                    transactions.append(data)
-
-        except Exception as exc:
-            errors.append(
-                {
-                    "scoring_period": scoring_period,
-                    "error": str(exc)[:250],
-                }
-            )
-
-    # Newest first.
-    transactions.sort(
-        key=lambda item: item.get("date") or 0,
-        reverse=True,
-    )
-
-    return transactions, errors
-
-
-def matchup_to_dict(matchup):
-    home_team = safe_attr(matchup, "home_team")
-    away_team = safe_attr(matchup, "away_team")
-
-    return {
-        "home_team_id": safe_attr(home_team, "team_id"),
-        "home_team_name": safe_attr(home_team, "team_name"),
-        "home_score": safe_attr(matchup, "home_score"),
-        "away_team_id": safe_attr(away_team, "team_id"),
-        "away_team_name": safe_attr(away_team, "team_name"),
-        "away_score": safe_attr(matchup, "away_score"),
-    }
-
-
-def load_previous():
-    if not OUTPUT_PATH.exists():
-        return None
-
-    try:
-        return json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
-    except Exception:
-        return None
-
-
-def roster_index(data):
-    result = {}
-
-    if not data:
-        return result
-
-    for team in data.get("teams", []):
-        team_id = team.get("team_id")
-        team_name = team.get("team_name")
-
-        for player in team.get("roster", []):
-            player_id = player.get("player_id")
-
-            if player_id is not None:
-                result[player_id] = {
-                    "player_name": player.get("name"),
-                    "team_id": team_id,
-                    "team_name": team_name,
-                }
-
-    return result
-
-
-def available_index(data):
-    result = {}
-
-    if not data:
-        return result
-
-    for player in data.get("available_players", []):
-        player_id = player.get("player_id")
-
-        if player_id is not None:
-            result[player_id] = player.get("name")
-
-    return result
-
-
-def calculate_changes(previous, current):
-    changes = {
-        "roster_adds": [],
-        "roster_drops": [],
-        "available_pool_entries": [],
-        "available_pool_exits": [],
-    }
-
-    if not previous:
-        return changes
-
-    old_roster = roster_index(previous)
-    new_roster = roster_index(current)
-
-    for player_id, new_info in new_roster.items():
-        old_info = old_roster.get(player_id)
-
-        if old_info != new_info:
-            changes["roster_adds"].append(
-                {
-                    "player_id": player_id,
-                    "player_name": new_info["player_name"],
-                    "to_team_id": new_info["team_id"],
-                    "to_team_name": new_info["team_name"],
-                    "from_team_id": (
-                        old_info["team_id"] if old_info else None
-                    ),
-                    "from_team_name": (
-                        old_info["team_name"] if old_info else None
-                    ),
-                }
-            )
-
-    for player_id, old_info in old_roster.items():
-        new_info = new_roster.get(player_id)
-
-        if new_info != old_info:
-            changes["roster_drops"].append(
-                {
-                    "player_id": player_id,
-                    "player_name": old_info["player_name"],
-                    "from_team_id": old_info["team_id"],
-                    "from_team_name": old_info["team_name"],
-                    "to_team_id": (
-                        new_info["team_id"] if new_info else None
-                    ),
-                    "to_team_name": (
-                        new_info["team_name"] if new_info else None
-                    ),
-                }
-            )
-
-    old_available = available_index(previous)
-    new_available = available_index(current)
-
-    for player_id, name in new_available.items():
-        if player_id not in old_available:
-            changes["available_pool_entries"].append(
-                {
-                    "player_id": player_id,
-                    "player_name": name,
-                }
-            )
-
-    for player_id, name in old_available.items():
-        if player_id not in new_available:
-            changes["available_pool_exits"].append(
-                {
-                    "player_id": player_id,
-                    "player_name": name,
-                }
-            )
-
-    return changes
-
-
-def assert_no_sensitive_data(value, path="root"):
-    if isinstance(value, dict):
-        for key, child in value.items():
-            if SENSITIVE_KEY_PATTERN.search(str(key)):
-                raise RuntimeError(
-                    f"Sensitive-looking key found in output at {path}.{key}"
-                )
-
-            assert_no_sensitive_data(child, f"{path}.{key}")
-
-    elif isinstance(value, list):
-        for index, child in enumerate(value):
-            assert_no_sensitive_data(child, f"{path}[{index}]")
-
-
-def assert_no_secret_values(data):
-    serialized = json.dumps(data)
-
-    for name, secret in (
-        ("ESPN_S2", ESPN_S2),
-        ("ESPN_SWID", ESPN_SWID),
-    ):
-        if secret and secret in serialized:
-            raise RuntimeError(
-                f"Refusing to write output because {name} appeared in JSON"
-            )
-
-
-if not ESPN_S2 or not ESPN_SWID:
-    raise RuntimeError(
-        "ESPN_S2 and ESPN_SWID must be provided through environment secrets."
-    )
-
-
-league = League(
-    league_id=LEAGUE_ID,
-    year=SEASON,
-    espn_s2=ESPN_S2,
-    swid=ESPN_SWID,
-)
-
-previous = load_previous()
-
-teams = [team_to_dict(team) for team in league.teams]
-
-available_players = [
-    player_to_dict(player)
-    for player in league.free_agents(size=FREE_AGENT_LIMIT)
-]
-
-try:
-    box_scores = league.box_scores()
-    matchups = [matchup_to_dict(matchup) for matchup in box_scores]
-except Exception:
-    matchups = []
-
-transactions, transaction_errors = get_transactions()
-
-state = {
-    "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-    "league": {
-        "league_id": LEAGUE_ID,
-        "season": SEASON,
-        "current_week": safe_attr(league, "current_week"),
-        "scoring_period_id": safe_attr(league, "scoringPeriodId"),
-        "nfl_week": safe_attr(league, "nfl_week"),
-        "team_count": len(league.teams),
-    },
-    "teams": teams,
-    "available_players": available_players,
-    "matchups": matchups,
-    "transactions": transactions,
-    "transaction_fetch_errors": transaction_errors,
-}
-
-state["changes_since_previous_refresh"] = calculate_changes(
-    previous,
-    state,
-)
-
-assert_no_sensitive_data(state)
-assert_no_secret_values(state)
-
-OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-
-OUTPUT_PATH.write_text(
-    json.dumps(
-        state,
-        indent=2,
-        sort_keys=False,
-        default=str,
-    )
-    + "\n",
-    encoding="utf-8",
-)
-
-print(
-    f"Wrote {OUTPUT_PATH}: "
-    f"{len(teams)} teams, "
-    f"{len(available_players)} available players, "
-    f"{len(transactions)} executed transactions."
-)
+name: Refresh ESPN fantasy data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */4 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: espn-fantasy-sync
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch and sanitize league state
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+          ESPN_LEAGUE_ID: "1749747321"
+          ESPN_SEASON: "2026"
+          FREE_AGENT_LIMIT: "250"
+        run: python src/sync.py
+
+      - name: Secondary credential leak check
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          text = Path("public/fantasy-state.json").read_text(encoding="utf-8")
+
+          for name in ("ESPN_S2", "ESPN_SWID"):
+              secret = os.environ.get(name, "")
+              if secret and secret in text:
+                  raise SystemExit(
+                      f"Refusing to publish: {name} appeared in sanitized JSON"
+                  )
+
+          print("Credential leak check passed.")
+          PY
+
+      - name: Commit refreshed public data
+        run: |
+          if git diff --quiet -- public/fantasy-state.json; then
+            echo "No fantasy data changes to commit."
+            exit 0
+          fi
+
+          git config user.name "espn-fantasy-sync[bot]"
+          git config user.email "espn-fantasy-sync[bot]@users.noreply.github.com"
+
+          git add public/fantasy-state.json
+          git commit -m "Refresh fantasy league state"
+          git push
