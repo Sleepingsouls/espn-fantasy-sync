@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "waiting_for_first_sync",
+  "league": {
+    "league_id": 1749747321,
+    "season": 2026
+  },
+  "teams": [],
+  "free_agents": [],
+  "matchups": [],
+  "changes_since_previous_refresh": []
+}
