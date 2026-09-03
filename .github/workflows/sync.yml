@@ -3,8 +3,18 @@ name: Refresh ESPN fantasy data
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 */4 * * *"
+    # Daily at 7:45 AM MDT, before the 8 AM analysis
+    - cron: '45 13 * * *'
 
+    # Thu/Fri/Sat at 6:45 PM MDT, before the 7 PM analysis
+    # These are Fri/Sat/Sun in UTC
+    - cron: '45 0 * * 5,6,0'
+
+    # Sunday at 9:45 AM, 12:45 PM, 4:45 PM MDT
+    - cron: '45 15 * * 0'
+    - cron: '45 18 * * 0'
+    - cron: '45 22 * * 0'
+    
 permissions:
   contents: write
 
