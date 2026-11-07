@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-11-07T18:31:33.211977+00:00",
+  "generated_at_utc": "2026-11-07T19:01:37.751127+00:00",
   "league": {
     "league_id": 1749747321,
     "season": 2026,
@@ -2338,8 +2338,8 @@
       "points_against": 910.48,
       "standing": 11,
       "waiver_rank": 12,
-      "acquisitions": 21,
-      "drops": 21,
+      "acquisitions": 22,
+      "drops": 22,
       "trades": 0,
       "roster": [
         {
@@ -2555,34 +2555,6 @@
           "week_projected_points": 10.44
         },
         {
-          "playerId": 4032473,
-          "name": "Rashid Shaheed",
-          "position": "WR",
-          "proTeam": "SEA",
-          "eligibleSlots": [
-            "RB/WR",
-            "WR",
-            "WR/TE",
-            "RB/WR/TE",
-            "OP",
-            "BE",
-            "IR"
-          ],
-          "lineupSlot": "BE",
-          "injuryStatus": "OUT",
-          "injured": true,
-          "posRank": 76,
-          "percent_owned": 23.0,
-          "percent_started": 1.99,
-          "total_points": 42.2,
-          "avg_points": 6.03,
-          "projected_total_points": 57.93,
-          "projected_avg_points": 7.24,
-          "acquisitionType": "DRAFT",
-          "onTeamId": 6,
-          "week_projected_points": 0.0
-        },
-        {
           "playerId": 3116389,
           "name": "Samaje Perine",
           "position": "RB",
@@ -2678,7 +2650,7 @@
             "BE",
             "IR"
           ],
-          "lineupSlot": "WR",
+          "lineupSlot": "BE",
           "injuryStatus": "OUT",
           "injured": true,
           "posRank": 69,
@@ -2767,6 +2739,34 @@
           "acquisitionType": "ADD",
           "onTeamId": 6,
           "week_projected_points": 0.0
+        },
+        {
+          "playerId": 2977187,
+          "name": "Cooper Kupp",
+          "position": "WR",
+          "proTeam": "SEA",
+          "eligibleSlots": [
+            "RB/WR",
+            "WR",
+            "WR/TE",
+            "RB/WR/TE",
+            "OP",
+            "BE",
+            "IR"
+          ],
+          "lineupSlot": "WR",
+          "injuryStatus": "ACTIVE",
+          "injured": false,
+          "posRank": 62,
+          "percent_owned": 8.98,
+          "percent_started": 2.13,
+          "total_points": 51.6,
+          "avg_points": 6.45,
+          "projected_total_points": 49.85,
+          "projected_avg_points": 5.54,
+          "acquisitionType": "ADD",
+          "onTeamId": 6,
+          "week_projected_points": 8.03
         }
       ]
     },
@@ -6318,6 +6318,34 @@
       "week_projected_points": 12.82
     },
     {
+      "playerId": 4032473,
+      "name": "Rashid Shaheed",
+      "position": "WR",
+      "proTeam": "SEA",
+      "eligibleSlots": [
+        "RB/WR",
+        "WR",
+        "WR/TE",
+        "RB/WR/TE",
+        "OP",
+        "BE",
+        "IR"
+      ],
+      "lineupSlot": "",
+      "injuryStatus": "OUT",
+      "injured": true,
+      "posRank": 76,
+      "percent_owned": 23.0,
+      "percent_started": 1.99,
+      "total_points": 42.2,
+      "avg_points": 6.03,
+      "projected_total_points": 57.93,
+      "projected_avg_points": 7.24,
+      "acquisitionType": [],
+      "onTeamId": 0,
+      "week_projected_points": 0.0
+    },
+    {
       "playerId": 4428557,
       "name": "Tyjae Spears",
       "position": "RB",
@@ -7023,34 +7051,6 @@
       "acquisitionType": [],
       "onTeamId": 0,
       "week_projected_points": 0.0
-    },
-    {
-      "playerId": 2977187,
-      "name": "Cooper Kupp",
-      "position": "WR",
-      "proTeam": "SEA",
-      "eligibleSlots": [
-        "RB/WR",
-        "WR",
-        "WR/TE",
-        "RB/WR/TE",
-        "OP",
-        "BE",
-        "IR"
-      ],
-      "lineupSlot": "",
-      "injuryStatus": "ACTIVE",
-      "injured": false,
-      "posRank": 62,
-      "percent_owned": 8.98,
-      "percent_started": 2.13,
-      "total_points": 51.6,
-      "avg_points": 6.45,
-      "projected_total_points": 49.85,
-      "projected_avg_points": 5.54,
-      "acquisitionType": [],
-      "onTeamId": 0,
-      "week_projected_points": 8.03
     },
     {
       "playerId": 4241463,
@@ -10255,8 +10255,8 @@
         "IR"
       ],
       "lineupSlot": "",
-      "injuryStatus": "QUESTIONABLE",
-      "injured": false,
+      "injuryStatus": "OUT",
+      "injured": true,
       "posRank": 99,
       "percent_owned": 0.38,
       "percent_started": 0.03,
@@ -12385,53 +12385,53 @@
         "type": "FREEAGENT",
         "status": "EXECUTED",
         "scoring_period": 9,
-        "date_epoch_ms": 1794072764211,
+        "date_epoch_ms": 1794076371865,
         "bid_amount": 0,
         "actions": [
           {
-            "team_id": 2,
-            "team_name": "The Crosby Show",
+            "team_id": 6,
+            "team_name": "Malik My Balls",
             "action": "ADD",
-            "player_id": 3055899,
-            "player_name": "Harrison Butker"
+            "player_id": 2977187,
+            "player_name": "Cooper Kupp"
           },
           {
-            "team_id": 2,
-            "team_name": "The Crosby Show",
+            "team_id": 6,
+            "team_name": "Malik My Balls",
             "action": "DROP",
-            "player_id": 2985659,
-            "player_name": "Wil Lutz"
-          }
-        ]
-      },
-      {
-        "type": "FREEAGENT",
-        "status": "EXECUTED",
-        "scoring_period": 9,
-        "date_epoch_ms": 1794072593752,
-        "bid_amount": 0,
-        "actions": [
-          {
-            "team_id": 2,
-            "team_name": "The Crosby Show",
-            "action": "ADD",
-            "player_id": 4040761,
-            "player_name": "Devin Singletary"
-          },
-          {
-            "team_id": 2,
-            "team_name": "The Crosby Show",
-            "action": "DROP",
-            "player_id": 3051876,
-            "player_name": "Evan Engram"
+            "player_id": 4032473,
+            "player_name": "Rashid Shaheed"
           }
         ]
       }
     ]
   },
   "transactions": {
-    "count": 143,
+    "count": 144,
     "executed": [
+      {
+        "type": "FREEAGENT",
+        "status": "EXECUTED",
+        "scoring_period": 9,
+        "date_epoch_ms": 1794076371865,
+        "bid_amount": 0,
+        "actions": [
+          {
+            "team_id": 6,
+            "team_name": "Malik My Balls",
+            "action": "ADD",
+            "player_id": 2977187,
+            "player_name": "Cooper Kupp"
+          },
+          {
+            "team_id": 6,
+            "team_name": "Malik My Balls",
+            "action": "DROP",
+            "player_id": 4032473,
+            "player_name": "Rashid Shaheed"
+          }
+        ]
+      },
       {
         "type": "FREEAGENT",
         "status": "EXECUTED",
